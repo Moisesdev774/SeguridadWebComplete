@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <CopyRefAssembliesToPublishDirectory>false</CopyRefAssembliesToPublishDirectory>
+    <UserSecretsId>8183d9e7-4717-4399-896e-26ffb4510431</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.4" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SeguridadWeb.EntidadesDeNegocio\SeguridadWeb.EntidadesDeNegocio.csproj" />
+    <ProjectReference Include="..\SeguridadWeb.LogicaDeNegocio\SeguridadWeb.LogicaDeNegocio.csproj" />
+  </ItemGroup>
+
+</Project>

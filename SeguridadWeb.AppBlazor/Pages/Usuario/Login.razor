@@ -1,0 +1,35 @@
+﻿@page "/usuario/login"
+@using SeguridadWeb.EntidadesDeNegocio
+@inject HttpClient Http
+
+<p>Iniciar session</p>
+<EditForm Model="@usuario">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="row">
+        <div class="col-md-12">
+            <form asp-action="Login">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Login" class="control-label"></label>
+                        <input asp-for="Login" @bind-value="usuario.Login" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Password" class="control-label"></label>
+                        <input @bind-value="usuario.Password" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Login" class="btn btn-primary" />
+                </div>
+                <span class="text-danger">@error</span>
+            </form>
+        </div>
+    </div>
+</EditForm>
+@code {
+    private string error = "";
+    private Usuario usuario=new Usuario();
+}
