@@ -69,7 +69,7 @@ namespace SeguridadWeb.WebAPI
                });
             //****************************************************************
             #region Seguridad por token JWT
-            var key = "ESFE.SysSeguridad"; // Agregar la llave   
+            var key = "MABA.SysSeguridad"; // Agregar la llave   
                                            // Configurar el JWT
             services
              .AddAuthentication(x =>

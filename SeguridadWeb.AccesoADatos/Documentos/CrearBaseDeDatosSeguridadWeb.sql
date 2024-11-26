@@ -1,4 +1,4 @@
-USE [master]
+xUSE [master]
 GO
 CREATE DATABASE [SeguridadWebdb]
 GO
@@ -22,3 +22,24 @@ CREATE TABLE [dbo].[Usuario](
    [FechaRegistro] [datetime] NOT NULL,
    CONSTRAINT FK1_Rol_Usuario FOREIGN KEY (IdRol) REFERENCES Rol (Id)
 )
+GO
+-- Crear la tabla Categoria
+CREATE TABLE Categoria (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Nombre NVARCHAR(255) NOT NULL,
+    Top_Aux INT NULL
+);
+GO
+-- Crear la tabla Producto
+CREATE TABLE Producto (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    IdCategoria INT NOT NULL,
+    Nombre NVARCHAR(255) NOT NULL,
+    Precio DECIMAL(10, 2) NOT NULL,
+    Cantidad INT NOT NULL,
+    Descripcion NVARCHAR(MAX) NULL,
+    FotoProducto VARBINARY(MAX) NULL,
+    Estatus TINYINT NOT NULL,
+    Top_Aux INT NULL,
+    FOREIGN KEY (IdCategoria) REFERENCES Categoria(Id)
+);

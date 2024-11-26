@@ -1,0 +1,97 @@
+﻿@model SeguridadWeb.EntidadesDeNegocio.Producto
+
+@{
+    ViewData["Title"] = "Edit";
+    List<SeguridadWeb.EntidadesDeNegocio.Categoria> categorias = ViewBag.Categorias as List<SeguridadWeb.EntidadesDeNegocio.Categoria>;
+}
+
+<h1>Modificar Producto</h1>
+<hr />
+<form asp-action="Edit">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" class="form-control" />
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="Nombre" class="control-label"></label>
+                <input asp-for="Nombre" class="form-control" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="Precio" class="control-label"></label>
+                <input asp-for="Precio" class="form-control" />
+                <span asp-validation-for="Precio" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="Estatus" class="control-label"></label>
+                <select asp-for="Estatus" class="form-control">
+                    <option selected value="">SELECCIONAR</option>
+                    @if (Model.Estatus == 1)
+                    {
+                        <option selected value="1">ACTIVO</option>
+                    }
+                    else
+                    {
+                        <option value="1">ACTIVO</option>
+                    }
+                    @if (Model.Estatus == 2)
+                    {
+                        <option selected value="2">INACTIVO</option>
+                    }
+                    else
+                    {
+                        <option value="2">INACTIVO</option>
+                    }
+
+                </select>
+                <span asp-validation-for="Estatus" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="IdCategoria" class="control-label"></label>
+                <select asp-for="IdCategoria" class="form-control">
+                    <option selected value="">SELECCIONAR</option>
+                    @foreach (var item in categorias)
+                    {
+                        if (Model.IdCategoria == item.Id)
+                        {
+                            <option selected value="@item.Id">@item.Nombre</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Id">@item.Nombre</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="IdCategoria" class="text-danger"></span>
+            </div>
+        </div>
+       
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-dark">Cancelar</a>
+            </div>
+            <span class="text-danger">@ViewBag.Error</span>
+        </div>
+    </div>
+</form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(function () {
+            $("form input[name],form select[name]").trigger("blur");
+        });
+    </script>
+}
