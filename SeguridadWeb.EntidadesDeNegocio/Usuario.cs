@@ -29,7 +29,7 @@ namespace SeguridadWeb.EntidadesDeNegocio
         public string Login { get; set; }
         [Required(ErrorMessage = "Password es obligatorio")]
         [DataType(DataType.Password)]
-        [StringLength(32, ErrorMessage = "Password debe estar entre 5 a 32 caracteres", MinimumLength = 5)]
+        [StringLength(255, ErrorMessage = "Password debe estar entre 5 a 255 caracteres", MinimumLength = 5)]
         public string Password { get; set; }
         [Required(ErrorMessage = "Estatus es obligatorio")]
         public byte Estatus { get; set; }
@@ -40,7 +40,7 @@ namespace SeguridadWeb.EntidadesDeNegocio
         public int Top_Aux { get; set; }
         [NotMapped]
         [Required(ErrorMessage = "Confirmar el password")]
-        [StringLength(32, ErrorMessage = "Password debe estar entre 5 a 32 caracteres", MinimumLength = 5)]
+        [StringLength(255, ErrorMessage = "Password debe estar entre 5 a 255 caracteres", MinimumLength = 5)]
         [DataType(DataType.Password)]
         [Compare("Password", ErrorMessage = "Password y confirmar password deben de ser iguales")]
         [Display(Name = "Confirmar password")]

@@ -4,30 +4,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-// Agregar la siguiente libreria para la seguridad JWT
 using SeguridadWeb.WebAPI.Auth;
 using Microsoft.AspNetCore.Authorization;
 using SeguridadWeb.EntidadesDeNegocio;
 using SeguridadWeb.LogicaDeNegocio;
 using System.Text.Json;
-// ***************************************************
 
 namespace SeguridadWeb.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    /*[Authorize] */// agregar el siguiente metadato para autorizar JWT la Web API
     public class UsuarioController : ControllerBase
     {
         private UsuarioBL usuarioBL = new UsuarioBL();
-        // Codigo para agregar la seguridad JWT
         private readonly IJwtAuthenticationService authService;
+
         public UsuarioController(IJwtAuthenticationService pAuthService)
         {
             authService = pAuthService;
         }
-        //************************************************
+
         // GET: api/<UsuarioController>
         [HttpGet]
         public async Task<IEnumerable<Usuario>> Get()
@@ -39,8 +35,7 @@ namespace SeguridadWeb.WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<Usuario> Get(int id)
         {
-            Usuario usuario = new Usuario();
-            usuario.Id = id;
+            Usuario usuario = new Usuario { Id = id };
             return await usuarioBL.ObtenerPorIdAsync(usuario);
         }
 
@@ -53,10 +48,9 @@ namespace SeguridadWeb.WebAPI.Controllers
                 await usuarioBL.CrearAsync(usuario);
                 return Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
 
@@ -67,18 +61,21 @@ namespace SeguridadWeb.WebAPI.Controllers
             var option = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             string strUsuario = JsonSerializer.Serialize(pUsuario);
             Usuario usuario = JsonSerializer.Deserialize<Usuario>(strUsuario, option);
+
             if (usuario.Id == id)
             {
-                await usuarioBL.ModificarAsync(usuario);
-                return Ok();
+                try
+                {
+                    await usuarioBL.ModificarAsync(usuario);
+                    return Ok();
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
             }
-            else
-            {
-                return BadRequest();
-            }
-
+            return BadRequest("ID no coincide.");
         }
-
 
         // DELETE api/<UsuarioController>/5
         [HttpDelete("{id}")]
@@ -86,65 +83,60 @@ namespace SeguridadWeb.WebAPI.Controllers
         {
             try
             {
-                Usuario usuario = new Usuario();
-                usuario.Id = id;
+                Usuario usuario = new Usuario { Id = id };
                 await usuarioBL.EliminarAsync(usuario);
                 return Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPost("Buscar")]
         public async Task<List<Usuario>> Buscar([FromBody] object pUsuario)
         {
-
             var option = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             string strUsuario = JsonSerializer.Serialize(pUsuario);
             Usuario usuario = JsonSerializer.Deserialize<Usuario>(strUsuario, option);
-            var usuarios = await usuarioBL.BuscarIncluirRolesAsync(usuario);
-            usuarios.ForEach(s => s.Rol.Usuario = null); // Evitar la redundacia de datos
-            return usuarios;
 
+            var usuarios = await usuarioBL.BuscarIncluirRolesAsync(usuario);
+            usuarios.ForEach(s => s.Rol.Usuario = null); // Evitar redundancia de datos
+            return usuarios;
         }
+
         [HttpPost("Login")]
         [AllowAnonymous]
         public async Task<ActionResult> Login([FromBody] object pUsuario)
         {
-
             var option = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             string strUsuario = JsonSerializer.Serialize(pUsuario);
             Usuario usuario = JsonSerializer.Deserialize<Usuario>(strUsuario, option);
-            // codigo para autorizar el usuario por JWT
+
             Usuario usuario_auth = await usuarioBL.LoginAsync(usuario);
-            if (usuario_auth != null && usuario_auth.Id > 0 && usuario.Login == usuario_auth.Login)
+            if (usuario_auth != null && usuario_auth.Id > 0)
             {
                 var token = authService.Authenticate(usuario_auth);
                 return Ok(token);
             }
-            else
-            {
-                return Unauthorized();
-            }
-            // *********************************************
+            return Unauthorized();
         }
+
         [HttpPost("CambiarPassword")]
-        public async Task<ActionResult> CambiarPassword([FromBody] Object pUsuario)
+        public async Task<ActionResult> CambiarPassword([FromBody] object pUsuario)
         {
             try
             {
                 var option = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 string strUsuario = JsonSerializer.Serialize(pUsuario);
                 Usuario usuario = JsonSerializer.Deserialize<Usuario>(strUsuario, option);
+
                 await usuarioBL.CambiarPasswordAsync(usuario, usuario.ConfirmPassword_aux);
                 return Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
     }

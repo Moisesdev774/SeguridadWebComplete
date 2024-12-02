@@ -11,25 +11,30 @@ namespace SeguridadWeb.AccesoADatos
 {
     public class UsuarioDAL
     {
-        private static void EncriptarMD5(Usuario pUsuario)
+        private static void EncriptarPassword(Usuario pUsuario)
         {
-            using (var md5 = MD5.Create())
-            {
-                var result = md5.ComputeHash(Encoding.ASCII.GetBytes(pUsuario.Password));
-                var strEncriptar = "";
-                for (int i = 0; i < result.Length; i++)
-                    strEncriptar += result[i].ToString("x2").ToLower();
-                pUsuario.Password = strEncriptar;
-            }
+            // Generar el hash de la contraseña
+            pUsuario.Password = BCrypt.Net.BCrypt.HashPassword(pUsuario.Password);
         }
+        // ******************************************************************************************
+        private static bool VerificarPassword(string passwordIngresado, string passwordHash)
+        {
+            // Verifica que la contraseña ingresada coincida con el hash almacenado
+            return BCrypt.Net.BCrypt.Verify(passwordIngresado, passwordHash);
+        }
+        // ******************************************************************************************
+
         private static async Task<bool> ExisteLogin(Usuario pUsuario, BDContexto pDbContext)
         {
             bool result = false;
-            var loginUsuarioExiste = await pDbContext.Usuario.FirstOrDefaultAsync(s => s.Login == pUsuario.Login && s.Id != pUsuario.Id);
+            var loginUsuarioExiste = await pDbContext.Usuario
+                .FirstOrDefaultAsync(s => s.Login == pUsuario.Login && s.Id != pUsuario.Id);
             if (loginUsuarioExiste != null && loginUsuarioExiste.Id > 0 && loginUsuarioExiste.Login == pUsuario.Login)
                 result = true;
             return result;
         }
+        // ******************************************************************************************
+
         #region CRUD
         public static async Task<int> CrearAsync(Usuario pUsuario)
         {
@@ -37,25 +42,29 @@ namespace SeguridadWeb.AccesoADatos
             using (var bdContexto = new BDContexto())
             {
                 bool existeLogin = await ExisteLogin(pUsuario, bdContexto);
-                if (existeLogin == false)
+                if (!existeLogin)
                 {
                     pUsuario.FechaRegistro = DateTime.Now;
-                    EncriptarMD5(pUsuario);
+                    EncriptarPassword(pUsuario); // Hashear la contraseña
                     bdContexto.Add(pUsuario);
                     result = await bdContexto.SaveChangesAsync();
                 }
                 else
+                {
                     throw new Exception("Login ya existe");
+                }
             }
             return result;
         }
+        // ******************************************************************************************
+
         public static async Task<int> ModificarAsync(Usuario pUsuario)
         {
             int result = 0;
             using (var bdContexto = new BDContexto())
             {
                 bool existeLogin = await ExisteLogin(pUsuario, bdContexto);
-                if (existeLogin == false)
+                if (!existeLogin)
                 {
                     var usuario = await bdContexto.Usuario.FirstOrDefaultAsync(s => s.Id == pUsuario.Id);
                     usuario.IdRol = pUsuario.IdRol;
@@ -67,10 +76,14 @@ namespace SeguridadWeb.AccesoADatos
                     result = await bdContexto.SaveChangesAsync();
                 }
                 else
+                {
                     throw new Exception("Login ya existe");
+                }
             }
             return result;
         }
+        // ******************************************************************************************
+
         public static async Task<int> EliminarAsync(Usuario pUsuario)
         {
             int result = 0;
@@ -82,6 +95,8 @@ namespace SeguridadWeb.AccesoADatos
             }
             return result;
         }
+        // ******************************************************************************************
+
         public static async Task<Usuario> ObtenerPorIdAsync(Usuario pUsuario)
         {
             var usuario = new Usuario();
@@ -91,6 +106,8 @@ namespace SeguridadWeb.AccesoADatos
             }
             return usuario;
         }
+        // ******************************************************************************************
+
         public static async Task<List<Usuario>> ObtenerTodosAsync()
         {
             var usuarios = new List<Usuario>();
@@ -100,6 +117,8 @@ namespace SeguridadWeb.AccesoADatos
             }
             return usuarios;
         }
+        // ******************************************************************************************
+
         internal static IQueryable<Usuario> QuerySelect(IQueryable<Usuario> pQuery, Usuario pUsuario)
         {
             if (pUsuario.Id > 0)
@@ -125,6 +144,8 @@ namespace SeguridadWeb.AccesoADatos
                 pQuery = pQuery.Take(pUsuario.Top_Aux).AsQueryable();
             return pQuery;
         }
+        // ******************************************************************************************
+
         public static async Task<List<Usuario>> BuscarAsync(Usuario pUsuario)
         {
             var Usuarios = new List<Usuario>();
@@ -136,6 +157,8 @@ namespace SeguridadWeb.AccesoADatos
             }
             return Usuarios;
         }
+        // ******************************************************************************************
+
         #endregion
         public static async Task<List<Usuario>> BuscarIncluirRolesAsync(Usuario pUsuario)
         {
@@ -148,34 +171,42 @@ namespace SeguridadWeb.AccesoADatos
             }
             return usuarios;
         }
+        // ******************************************************************************************
+
         public static async Task<Usuario> LoginAsync(Usuario pUsuario)
         {
             var usuario = new Usuario();
             using (var bdContexto = new BDContexto())
             {
-                EncriptarMD5(pUsuario);
-                usuario = await bdContexto.Usuario.FirstOrDefaultAsync(s => s.Login == pUsuario.Login &&
-                s.Password == pUsuario.Password && s.Estatus == (byte)Estatus_Usuario.ACTIVO);
+                usuario = await bdContexto.Usuario.FirstOrDefaultAsync(s =>
+                    s.Login == pUsuario.Login && s.Estatus == (byte)Estatus_Usuario.ACTIVO);
+
+                if (usuario != null && !VerificarPassword(pUsuario.Password, usuario.Password))
+                {
+                    usuario = null; // Contraseña incorrecta
+                }
             }
             return usuario;
         }
+        // ******************************************************************************************
+
         public static async Task<int> CambiarPasswordAsync(Usuario pUsuario, string pPasswordAnt)
         {
             int result = 0;
-            var usuarioPassAnt = new Usuario { Password = pPasswordAnt };
-            EncriptarMD5(usuarioPassAnt);
             using (var bdContexto = new BDContexto())
             {
                 var usuario = await bdContexto.Usuario.FirstOrDefaultAsync(s => s.Id == pUsuario.Id);
-                if (usuarioPassAnt.Password == usuario.Password)
+                if (usuario != null && VerificarPassword(pPasswordAnt, usuario.Password))
                 {
-                    EncriptarMD5(pUsuario);
+                    EncriptarPassword(pUsuario); // Hashear la nueva contraseña
                     usuario.Password = pUsuario.Password;
                     bdContexto.Update(usuario);
                     result = await bdContexto.SaveChangesAsync();
                 }
                 else
+                {
                     throw new Exception("El password actual es incorrecto");
+                }
             }
             return result;
         }
